@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useRef, useState } from "react";
+import { streamChat } from "@/api/chat";
 import {
   Bot,
   ChevronDown,
@@ -10,11 +10,11 @@ import {
   Send,
   User,
 } from "lucide-react";
-import { streamChat } from "@/api/chat";
+import { SubmitEvent, useRef, useState } from "react";
 
 type Message = { role: "assistant" | "user"; content: string };
 
-function formatAssistantText(value: string) {
+const formatAssistantText = (value: string) => {
   try {
     const parsed: unknown = JSON.parse(value);
     if (
@@ -29,13 +29,13 @@ function formatAssistantText(value: string) {
     // The API may return plain text instead of a JSON envelope.
   }
   return value;
-}
+};
 
 const starterMessages: Message[] = [
   {
     role: "assistant",
     content:
-      "Hi, I’m the Parts Unlimited assistant. Ask me about our products, capabilities, or support.",
+      "Hi, I'm the Parts Unlimited assistant. Ask me about our products, capabilities, or support.",
   },
 ];
 
@@ -46,7 +46,7 @@ const faqs = [
   "Where can I find my nearest store?",
 ];
 
-export function ChatPanel() {
+const ChatPanel = () => {
   const [collapsed, setCollapsed] = useState(true);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>(starterMessages);
@@ -55,29 +55,29 @@ export function ChatPanel() {
   const controllerRef = useRef<AbortController | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
-  function getThreadId() {
+  const getThreadId = () => {
     const storedThreadId = sessionStorage.getItem("thread_id");
     if (storedThreadId) return storedThreadId;
     const threadId = crypto.randomUUID();
     sessionStorage.setItem("thread_id", threadId);
     return threadId;
-  }
+  };
 
-  function clearChat() {
+  const clearChat = () => {
     if (isStreaming) return;
     setMessages(starterMessages);
     setInput("");
     setStatus("");
     sessionStorage.removeItem("thread_id");
-  }
+  };
 
-  function scrollToEnd() {
+  const scrollToEnd = () => {
     requestAnimationFrame(() =>
       endRef.current?.scrollIntoView({ behavior: "smooth" }),
     );
-  }
+  };
 
-  async function askQuestion(question: string) {
+  const askQuestion = async (question: string) => {
     if (isStreaming) return;
     setMessages((current) => [...current, { role: "user", content: question }]);
     setInput("");
@@ -108,21 +108,21 @@ export function ChatPanel() {
     setIsStreaming(false);
     setStatus("");
     scrollToEnd();
-  }
+  };
 
-  function stopStreaming() {
+  const stopStreaming = () => {
     controllerRef.current?.abort();
     controllerRef.current = null;
     setIsStreaming(false);
     setStatus("Answer stopped.");
-  }
+  };
 
-  function submit(event: FormEvent<HTMLFormElement>) {
+  const submit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     const trimmed = input.trim();
     if (!trimmed || isStreaming) return;
     void askQuestion(trimmed);
-  }
+  };
 
   if (collapsed) {
     return (
@@ -256,4 +256,5 @@ export function ChatPanel() {
       </form>
     </div>
   );
-}
+};
+export default ChatPanel;

@@ -11,9 +11,9 @@ type StreamChatOptions = {
   onError?: (message: string) => void
 }
 
-/** Streams the RAG backend's server-sent events for a chat message. */
-export async function streamChat(message: string, options: StreamChatOptions = {}) {
-  const { threadId, baseUrl = process.env.NEXT_PUBLIC_API_URL, signal, onStatus, onSources, onAnswer, onDone, onError } = options
+export const streamChat = async (message: string, options: StreamChatOptions = {}) => {
+  const { threadId, signal, onStatus, onSources, onAnswer, onDone, onError } = options
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL
   const payload: { message: string; thread_id?: string } = { message }
   if (threadId !== undefined) payload.thread_id = threadId
 
@@ -32,7 +32,11 @@ export async function streamChat(message: string, options: StreamChatOptions = {
   }
 
   if (!response.ok) {
-    onError?.(response.status === 429 ? 'Too many requests. Please wait a moment and try again.' : response.status === 422 ? 'Your message is empty or too long.' : 'Something went wrong. Please try again.')
+    let errMsg = response.status === 429 ? 
+    'Too many requests. Please wait a moment and try again.' : 
+    response.status === 422 ? 'Your message is empty or too long.' : 
+    'Something went wrong. Please try again.'
+    onError?.(errMsg)
     return
   }
 
@@ -70,7 +74,11 @@ export async function streamChat(message: string, options: StreamChatOptions = {
           else if (line.startsWith('data:')) dataLines.push(line.slice(5).trim())
         }
         if (dataLines.length) {
-          try { handleEvent(name, JSON.parse(dataLines.join('\n')) as Record<string, unknown>) } catch { /* Ignore malformed events. */ }
+          try { 
+            handleEvent(name, JSON.parse(dataLines.join('\n')) as Record<string, unknown>) } 
+          catch { 
+            // Ignore malformed events.
+          }
         }
         end = buffer.indexOf('\n\n')
       }
