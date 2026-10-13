@@ -1,5 +1,5 @@
-import { BusinessSite } from '@/components/business-site'
+import BusinessSite from "@/components/business-site";
 
 export default function Home() {
-  return <BusinessSite />
+  return <BusinessSite />;
 }
